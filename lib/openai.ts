@@ -31,75 +31,72 @@ export async function sendMessage({
   // Add the system prompt as the first message
   const formattedMessages = [
     { role: "system", content: systemPrompt },
-    ...messages.map((message) => ({
-      role: message.role,
-      content: message.content,
-    })),
+    ...messages.map((message) => {
+      if (message.role === "user" || message.role === "assistant") {
+        return {
+          role: message.role,
+          content: message.content,
+        };
+      }
+      throw new Error("Invalid message role detected.");
+    }),
   ];
 
   // Make the OpenAI API call
   const completion = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
+    model: "gpt-4o-mini", // Adjust model as needed
     messages: formattedMessages,
     max_tokens: maxTokens,
-    tools: [
+    functions: [
       {
-        type: "function",
-        function: {
-          name: "approveTransfer",
-          description:
-            "Approve the money transfer request and provide explanation",
-          parameters: {
-            type: "object",
-            properties: {
-              explanation: {
-                type: "string",
-                description:
-                  "Explanation for why the money transfer is approved",
-              },
+        name: "approveTransfer",
+        description:
+          "Approve the money transfer request and provide explanation",
+        parameters: {
+          type: "object",
+          properties: {
+            explanation: {
+              type: "string",
+              description: "Explanation for why the money transfer is approved",
             },
-            required: ["explanation"],
           },
+          required: ["explanation"],
         },
       },
       {
-        type: "function",
-        function: {
-          name: "rejectTransfer",
-          description:
-            "Reject the money transfer request and provide explanation",
-          parameters: {
-            type: "object",
-            properties: {
-              explanation: {
-                type: "string",
-                description:
-                  "Explanation for why the money transfer is rejected",
-              },
+        name: "rejectTransfer",
+        description:
+          "Reject the money transfer request and provide explanation",
+        parameters: {
+          type: "object",
+          properties: {
+            explanation: {
+              type: "string",
+              description: "Explanation for why the money transfer is rejected",
             },
-            required: ["explanation"],
           },
+          required: ["explanation"],
         },
       },
     ],
-    tool_choice: "auto",
+    function_call: "auto", // Automatically invoke the appropriate function
   });
 
-  const toolCall = completion.choices[0].message.tool_calls?.[0];
+  const functionCall = completion.choices[0].message?.function_call;
 
-  if (!toolCall) {
-    console.log("No tool call", completion.choices[0].message.content);
+  if (!functionCall) {
+    console.log("No function call", completion.choices[0].message?.content);
     return {
-      explanation: completion.choices[0].message.content || "Transfer rejected",
+      explanation: completion.choices[0].message?.content || "Transfer rejected",
       decision: false,
     };
   }
 
-  const args = JSON.parse(toolCall.function.arguments);
-  console.log("Tool call", toolCall.function.name, args);
+  const args = JSON.parse(functionCall.arguments);
+  console.log("Function call", functionCall.name, args);
 
   return {
     explanation: args.explanation,
-    decision: toolCall.function.name === "approveTransfer",
+    decision: functionCall.name === "approveTransfer",
   };
 }
