@@ -31,16 +31,15 @@ export async function sendMessage({
   // Add the system prompt as the first message
   const formattedMessages = [
     { role: "system", content: systemPrompt },
-    ...messages.map((message) => {
-      if (message.role === "user" || message.role === "assistant") {
-        return {
-          role: message.role,
-          content: message.content,
-        };
-      }
-      throw new Error("Invalid message role detected.");
-    }),
-  ];
+    ...messages.map((message) => ({
+      role: message.role,
+      content: message.content,
+    })),
+  ] as Array<{
+    role: "user" | "system" | "assistant";
+    content: string;
+    name?: string; // Optional for function call-related messages
+  }>;
 
   // Make the OpenAI API call
   const completion = await openai.chat.completions.create({
