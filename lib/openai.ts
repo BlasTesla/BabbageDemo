@@ -72,6 +72,7 @@ export async function sendMessage({
     ],
     tool_choice: "auto",
     max_tokens: maxTokens,
+    temperature: 0.7,
   });
 
   const toolCall = completion.choices[0].message.tool_calls?.[0];

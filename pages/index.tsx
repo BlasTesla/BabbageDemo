@@ -1,3 +1,4 @@
+// pages/index.tsx
 import { useState } from 'react'
 import { Message } from '../lib/types'
 
@@ -7,7 +8,7 @@ export default function Home() {
 
   const sendUserMessage = async () => {
     if (!input.trim()) return;
-    const newMessages = [...messages, { role: 'user', content: input.trim() }];
+    const newMessages = [...messages, { role: 'user' as const, content: input.trim() }];
     setMessages(newMessages);
     setInput('');
 
@@ -28,28 +29,40 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col items-center p-4">
-      <div className="max-w-md w-full bg-white shadow-md rounded p-4">
-        <h1 className="text-2xl font-bold mb-4">Babbage AI Agent</h1>
-        <div className="border p-2 mb-4 h-64 overflow-auto">
-          {messages.map((msg, i) => (
-            <div key={i} className={msg.role === 'user' ? 'text-right' : 'text-left'}>
-              <p><strong>{msg.role === 'user' ? 'You:' : 'Babbage:'}</strong> {msg.content}</p>
-            </div>
-          ))}
+    <div className="min-h-screen bg-black text-white flex flex-col items-center p-4">
+      <div className="max-w-2xl w-full flex flex-col space-y-4">
+        <header className="w-full flex items-center justify-between py-4 border-b border-gray-800">
+          <h1 className="text-lg font-bold text-white">Babbage AI Agent</h1>
+          <nav className="space-x-4">
+            <a href="#" className="text-gray-400 hover:text-white transition">About</a>
+            <a href="#" className="text-gray-400 hover:text-white transition">FAQ</a>
+          </nav>
+        </header>
+
+        <div className="flex-1 border border-gray-800 rounded p-4 h-96 overflow-auto bg-black">
           {messages.length === 0 && (
             <p className="text-gray-500 text-center">Send a message to start</p>
           )}
+          {messages.map((msg, i) => {
+            const isUser = msg.role === 'user';
+            const bubbleClass = isUser ? 'bg-gray-800 text-gray-100 text-right self-end' : 'bg-gray-900 text-gray-200 text-left';
+            return (
+              <div key={i} className={`mb-2 max-w-prose p-3 rounded-lg ${bubbleClass}`}>
+                <p><strong>{isUser ? 'You:' : 'Babbage:'}</strong> {msg.content}</p>
+              </div>
+            );
+          })}
         </div>
-        <div className="flex">
+
+        <div className="flex items-center space-x-2">
           <input
-            className="border flex-1 p-2 rounded mr-2"
+            className="border border-gray-700 bg-black text-white p-2 rounded focus:border-blue-500 outline-none w-full"
             value={input}
             onChange={e => setInput(e.target.value)}
             placeholder="Type your message..."
           />
           <button
-            className="bg-blue-500 text-white px-4 py-2 rounded"
+            className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded transition-all font-medium"
             onClick={sendUserMessage}
           >
             Send
